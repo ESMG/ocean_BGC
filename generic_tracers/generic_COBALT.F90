@@ -140,7 +140,10 @@ module generic_COBALT
   use constants_mod,     only: WTMCO2, WTMO2,WTMN,rdgas,wtmair
   use data_override_mod, only: data_override
   use fms_mod,           only: write_version_number, FATAL, WARNING, stdout, stdlog,mpp_pe,mpp_root_pe
-  use fms_mod,           only: open_namelist_file, check_nml_error, close_file
+  use fms_mod,           only: check_nml_error
+#ifndef INTERNAL_FILE_NML
+  use fms_mod,           only: open_namelist_file, close_file
+#endif
   use MOM_EOS,           only: calculate_density
   use MOM_variables,     only: thermo_var_ptrs
 
