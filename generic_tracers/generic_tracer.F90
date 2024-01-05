@@ -1,34 +1,34 @@
 !----------------------------------------------------------------
-! <CONTACT EMAIL="Niki.Zadeh@noaa.gov"> Niki Zadeh 
+! <CONTACT EMAIL="Niki.Zadeh@noaa.gov"> Niki Zadeh
 ! </CONTACT>
-! 
+!
 ! <REVIEWER EMAIL="William.Cooke@noaa.gov"> William Cooke
 ! </REVIEWER>
 !
 ! <OVERVIEW>
-! This module provides the main interfaces between Ocean models and 
+! This module provides the main interfaces between Ocean models and
 ! generic tracers.
 ! </OVERVIEW>
 !<DESCRIPTION>
 ! Generic Tracers are designed to be used by both GFDL Ocean models, GOLD and MOM.
 ! This module provides the main interfaces for using generic tracers.
 ! Generic Tracers are contained in separate modules according to their
-! chemical/physical similarity (currently generic_TOPAZ, generic_COBALT, 
+! chemical/physical similarity (currently generic_TOPAZ, generic_COBALT,
 ! generic_ERGOM and generic_CFC)
-! This module acts as a router for these various tracer modules and 
+! This module acts as a router for these various tracer modules and
 ! routes the subroutine calls to the appropriate tracer module.
-! It also maintains a (linked) list of all generic tracers created in 
+! It also maintains a (linked) list of all generic tracers created in
 ! the experiment. This list acts as the "state" of generic tracers and
 ! contains all the information for all such tracers. This module provides
-! a subroutine to query its state at any time. 
+! a subroutine to query its state at any time.
 !</DESCRIPTION>
 ! <REFERENCE>
-! http://cobweb.gfdl.noaa.gov/~nnz/MITeam_GUTS_022708.pdf 
+! http://cobweb.gfdl.noaa.gov/~nnz/MITeam_GUTS_022708.pdf
 ! </REFERENCE>
 ! <REFERENCE>
-! http://cobweb.gfdl.noaa.gov/~nnz/wiki/doku.php?id=genericunifiedtracers 
+! http://cobweb.gfdl.noaa.gov/~nnz/wiki/doku.php?id=genericunifiedtracers
 ! </REFERENCE>
-! 
+!
 !----------------------------------------------------------------
 
 module generic_tracer
@@ -44,13 +44,13 @@ module generic_tracer
   use g_tracer_utils, only : g_tracer_type, g_tracer_init, g_diag_type
   use g_tracer_utils, only : g_tracer_get_common, g_tracer_set_common, g_tracer_is_prog
   use g_tracer_utils, only : g_tracer_coupler_set,g_tracer_coupler_get, g_tracer_register_diag
-  use g_tracer_utils, only : g_tracer_vertdiff_M, g_tracer_vertdiff_G, g_tracer_get_next     
+  use g_tracer_utils, only : g_tracer_vertdiff_M, g_tracer_vertdiff_G, g_tracer_get_next
   use g_tracer_utils, only : g_tracer_diag, g_tracer_print_info, g_tracer_vertfill
   use g_tracer_utils, only : g_tracer_coupler_accumulate
 
   use generic_abiotic, only : generic_abiotic_register, generic_abiotic_register_diag
   use generic_abiotic, only : generic_abiotic_init, generic_abiotic_update_from_source
-  use generic_abiotic, only : generic_abiotic_set_boundary_values, generic_abiotic_end, do_generic_abiotic 
+  use generic_abiotic, only : generic_abiotic_set_boundary_values, generic_abiotic_end, do_generic_abiotic
   use generic_abiotic, only : as_param_abiotic
 
   use generic_age,    only : generic_age_register
@@ -161,7 +161,7 @@ contains
     if (generic_tracer_register_called) return
 
     stdoutunit=stdout();stdlogunit=stdlog()
-    ! provide for namelist over-ride of defaults 
+    ! provide for namelist over-ride of defaults
     read (input_nml_file, nml=generic_tracer_nml, iostat=io_status)
     ierr = check_nml_error(io_status,'generic_tracer_nml')
 
@@ -212,7 +212,7 @@ contains
 
     if(do_generic_COBALT) &
          call generic_COBALT_register(tracer_list)
-    
+
     call g_tracer_print_info(tracer_list, verbosity)
 
     generic_tracer_register_called = .true.
@@ -226,12 +226,12 @@ contains
   !  </OVERVIEW>
   !  <DESCRIPTION>
   !   Reads the namelist generic_tracer_nml to find the requested tracer packages
-  !   Sets the common properties to be used by ALL generic tracers: 
+  !   Sets the common properties to be used by ALL generic tracers:
   !    isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,init_time
   !   Initialize each requested generic tracer package by calling their init routine
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call generic_tracer_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,init_time)
+  !   call generic_tracer_init(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,init_time,geolon,geolat)
   !  </TEMPLATE>
   !  <IN NAME="isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes(3)" TYPE="integer">
   !   Domain boundaries,
@@ -239,7 +239,7 @@ contains
   !   axes(3): diag axes
   !  </IN>
   !  <IN NAME="init_time" TYPE="">
-  !   
+  !
   !  </IN>
   !  <IN NAME="" TYPE="type(time_type)">
   !   Initiation time
@@ -258,24 +258,24 @@ contains
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_init'
 
-    call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat) 
+    call g_tracer_set_common(isc,iec,jsc,jec,isd,ied,jsd,jed,nk,ntau,axes,grid_tmask,grid_kmt,init_time,geolon,geolat)
 
     !Allocate and initialize all registered generic tracers
     !JGJ 2013/05/31  merged COBALT into siena_201303
     if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6 .or. do_generic_TOPAZ &
        .or. do_generic_ERGOM .or. do_generic_BLING .or. do_generic_miniBLING .or. do_generic_COBALT .or. do_generic_blres) then
-       g_tracer => tracer_list        
-       !Go through the list of tracers 
-       do  
+       g_tracer => tracer_list
+       !Go through the list of tracers
+       do
           call g_tracer_init(g_tracer)
 
           !traverse the linked list till hit NULL
           call g_tracer_get_next(g_tracer, g_tracer_next)
           if(.NOT. associated(g_tracer_next)) exit
-          g_tracer=>g_tracer_next  
+          g_tracer=>g_tracer_next
 
        enddo
-    endif    
+    endif
 
     !Initilalize specific tracers
     if(do_generic_abiotic) &
@@ -316,42 +316,42 @@ contains
   subroutine generic_tracer_register_diag
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_register_diag'
     type(g_tracer_type), pointer    :: g_tracer,g_tracer_next
-    
+
     !Diagnostics register for the fields common to All generic tracers
     !JGJ 2013/05/31  merged COBALT into siena_201303
 
     if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6 .or. do_generic_TOPAZ &
        .or. do_generic_ERGOM .or. do_generic_BLING .or. do_generic_miniBLING .or. do_generic_COBALT .or. do_generic_blres) then
 
-       g_tracer => tracer_list        
-       !Go through the list of tracers 
-       do  
+       g_tracer => tracer_list
+       !Go through the list of tracers
+       do
           call g_tracer_register_diag(g_tracer)
 
           !traverse the linked list till hit NULL
           call g_tracer_get_next(g_tracer, g_tracer_next)
           if(.NOT. associated(g_tracer_next)) exit
-          g_tracer=>g_tracer_next  
+          g_tracer=>g_tracer_next
 
        enddo
-    endif    
+    endif
 
     !Diagnostics register for fields particular to each tracer module
 
     if(do_generic_abiotic)  call generic_abiotic_register_diag(diag_list)
-    
-    if(do_generic_TOPAZ)  call generic_TOPAZ_register_diag(diag_list)    
 
-    if(do_generic_ERGOM)  call generic_ERGOM_register_diag(diag_list)    
+    if(do_generic_TOPAZ)  call generic_TOPAZ_register_diag(diag_list)
 
-    if(do_generic_BLING)  call generic_BLING_register_diag(diag_list)    
-    
-    if(do_generic_miniBLING)  call generic_miniBLING_register_diag()    
+    if(do_generic_ERGOM)  call generic_ERGOM_register_diag(diag_list)
+
+    if(do_generic_BLING)  call generic_BLING_register_diag(diag_list)
+
+    if(do_generic_miniBLING)  call generic_miniBLING_register_diag()
 
     if(do_generic_COBALT)  call generic_COBALT_register_diag(diag_list)
 
     if(do_generic_SF6) call generic_SF6_register_diag(diag_list)
-    
+
     if(do_generic_CFC) call generic_CFC_register_diag(diag_list)
 
   end subroutine generic_tracer_register_diag
@@ -364,7 +364,7 @@ contains
   !   Calls the corresponding generic_X_update_from_coupler routine for each package X.
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call generic_tracer_coupler_get(IOB_struc) 
+  !   call generic_tracer_coupler_get(IOB_struc)
   !  </TEMPLATE>
   !  <IN NAME="IOB_struc" TYPE="type(coupler_2d_bc_type)">
   !   Ice Ocean Boundary flux structure
@@ -477,7 +477,7 @@ contains
   !   Lower bounds of x and y extents of input arrays on data domain
   !  </IN>
   !  <IN NAME="Temp" TYPE="real, dimension(ilb:,jlb:,:)">
-  !   Ocean temperature   
+  !   Ocean temperature
   !  </IN>
   !  <IN NAME="Salt" TYPE="real, dimension(ilb:,jlb:,:)">
   !   Ocean salinity
@@ -492,7 +492,7 @@ contains
   !   Shortwave peneteration
   !  </IN>
   !  <IN NAME="hblt_depth" TYPE="real, dimension(ilb:,jlb:)">
-  !   
+  !
   !  </IN>
   !  <IN NAME="grid_dat" TYPE="real, dimension(ilb:,jlb:)">
   !   Grid area
@@ -520,7 +520,7 @@ contains
     real, dimension(:,ilb:,jlb:),   intent(in) :: sw_pen_band
     real, dimension(:,ilb:,jlb:,:), intent(in) :: opacity_band
     real, dimension(ilb:,jlb:),optional,  intent(in) :: internal_heat
-    real, dimension(ilb:,jlb:),optional,  intent(in) :: frunoff 
+    real, dimension(ilb:,jlb:),optional,  intent(in) :: frunoff
     real, dimension(ilb:,jlb:),optional,  intent(in) :: grid_ht
     real, dimension(ilb:,jlb:),optional , intent(in) :: current_wave_stress
     real,                      optional , intent(in) :: sosga ! global avg. sea surface salinity
@@ -582,7 +582,7 @@ contains
   !   Time step increment
   !  </IN>
   !  <IN NAME="tau" TYPE="integer">
-  !   Time step index used for the concentration field   
+  !   Time step index used for the concentration field
   !  </IN>
   ! </SUBROUTINE>
 
@@ -593,20 +593,20 @@ contains
 
     character(len=fm_string_len), parameter :: sub_name = 'generic_tracer_update_from_bottom'
 
-    !    if(do_generic_blres)  call generic_blres_update_from_bottom(tracer_list)!Nothing to do for mixed layer tracer 
+    !    if(do_generic_blres)  call generic_blres_update_from_bottom(tracer_list)!Nothing to do for mixed layer tracer
 
-    !    if(do_generic_age)    call generic_age_update_from_bottom(tracer_list)!Nothing to do for age 
+    !    if(do_generic_age)    call generic_age_update_from_bottom(tracer_list)!Nothing to do for age
 
-    !    if(do_generic_argon)    call generic_argon_update_from_bottom(tracer_list)!Nothing to do for argon 
+    !    if(do_generic_argon)    call generic_argon_update_from_bottom(tracer_list)!Nothing to do for argon
 
-    !    if(do_generic_CFC)    call generic_CFC_update_from_bottom(tracer_list)!Nothing to do for CFC 
+    !    if(do_generic_CFC)    call generic_CFC_update_from_bottom(tracer_list)!Nothing to do for CFC
 
-    !    if(do_generic_SF6)    call generic_SF6_update_from_bottom(tracer_list)!Nothing to do for SF6 
+    !    if(do_generic_SF6)    call generic_SF6_update_from_bottom(tracer_list)!Nothing to do for SF6
 
     if(do_generic_TOPAZ)  call generic_TOPAZ_update_from_bottom(tracer_list,dt, tau, model_time)
 
     if(do_generic_ERGOM)  call generic_ERGOM_update_from_bottom(tracer_list,dt, tau, model_time)
-   
+
     if(do_generic_BLING)  call generic_BLING_update_from_bottom(tracer_list,dt, tau)
 
     if(do_generic_miniBLING)  call generic_miniBLING_update_from_bottom(tracer_list,dt, tau)
@@ -631,7 +631,7 @@ contains
   !   call generic_tracer_vertdiff_G(h_old, ea, eb, dt, Rho_0,tau)
   !  </TEMPLATE>
   !  <IN NAME="" TYPE="">
-  !   
+  !
   !  </IN>
   ! </SUBROUTINE>
   subroutine generic_tracer_vertdiff_G(h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau)
@@ -641,22 +641,22 @@ contains
     type(g_tracer_type), pointer    :: g_tracer,g_tracer_next
     real :: KD_SMOOTH = 1.0E-06
 
-    !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?    
+    !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?
     !JGJ 2013/05/31  merged COBALT into siena_201303
     if(do_generic_abiotic .or. do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_SF6 .or. do_generic_TOPAZ &
        .or. do_generic_ERGOM .or. do_generic_BLING .or. do_generic_miniBLING .or. do_generic_COBALT .or. do_generic_blres) then
 
-       g_tracer => tracer_list        
-       !Go through the list of tracers 
-       do  
-          if(g_tracer_is_prog(g_tracer)) then 
+       g_tracer => tracer_list
+       !Go through the list of tracers
+       do
+          if(g_tracer_is_prog(g_tracer)) then
              call g_tracer_vertdiff_G(g_tracer,h_old, ea, eb, dt, kg_m2_to_H, m_to_H, tau)
              if(do_vertfill_post) call g_tracer_vertfill(g_tracer, h_old, KD_SMOOTH*dt, tau=1)
           endif
           !traverse the linked list till hit NULL
           call g_tracer_get_next(g_tracer, g_tracer_next)
           if(.NOT. associated(g_tracer_next)) exit
-          g_tracer=>g_tracer_next  
+          g_tracer=>g_tracer_next
 
        enddo
     endif
@@ -665,16 +665,16 @@ contains
 
   ! <SUBROUTINE NAME="">
   !  <OVERVIEW>
-  !   
+  !
   !  </OVERVIEW>
   !  <DESCRIPTION>
-  !   
+  !
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call 
+  !   call
   !  </TEMPLATE>
   !  <IN NAME="" TYPE="">
-  !   
+  !
   !  </IN>
   ! </SUBROUTINE>
   subroutine generic_tracer_vertdiff_M(dh, dhw, diff_cbt, dt, Rho_0,tau)
@@ -683,21 +683,21 @@ contains
     integer,                intent(in) :: tau
     type(g_tracer_type), pointer    :: g_tracer,g_tracer_next
 
-    !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?    
+    !nnz: Should I loop here or inside the sub g_tracer_vertdiff ?
     !JGJ 2013/05/31  merged COBALT into siena_201303
     if(do_generic_age .or. do_generic_argon .or. do_generic_CFC .or. do_generic_TOPAZ .or. do_generic_ERGOM &
        .or. do_generic_BLING .or. do_generic_miniBLING .or. do_generic_COBALT .or. do_generic_blres) then
 
-       g_tracer => tracer_list        
-       !Go through the list of tracers 
-       do  
+       g_tracer => tracer_list
+       !Go through the list of tracers
+       do
           if(g_tracer_is_prog(g_tracer)) &
-               call g_tracer_vertdiff_M(g_tracer,dh, dhw, diff_cbt, dt, Rho_0,tau) 
+               call g_tracer_vertdiff_M(g_tracer,dh, dhw, diff_cbt, dt, Rho_0,tau)
 
           !traverse the linked list till hit NULL
           call g_tracer_get_next(g_tracer, g_tracer_next)
           if(.NOT. associated(g_tracer_next)) exit
-          g_tracer=>g_tracer_next  
+          g_tracer=>g_tracer_next
 
        enddo
     endif
@@ -721,7 +721,7 @@ contains
   !   Lower bounds of x and y extents of input arrays on data domain
   !  </IN>
   !  <IN NAME="ST" TYPE="real, dimension(ilb:,jlb:)">
-  !   Sea Surface Temperature   
+  !   Sea Surface Temperature
   !  </IN>
   !  <IN NAME="SS" TYPE="real, dimension(ilb:,jlb:)">
   !   Sea Surface Salinity
@@ -804,7 +804,7 @@ contains
   !   Set the coupler arrays for ALL generic tracers to 0
   !  </DESCRIPTION>
   !  <TEMPLATE>
-  !   call 
+  !   call
   !  </TEMPLATE>
   !  <IN NAME="IOB_struc" TYPE="type(coupler_2d_bc_type)">
   !   Ice Ocean Boundary flux structure
